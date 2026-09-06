@@ -121,7 +121,6 @@
         ./modules/wsl
         ./modules/yazi
         ./modules/zellij
-        ./modules/pi
 
         ./home.nix
       ];

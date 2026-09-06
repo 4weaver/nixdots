@@ -33,6 +33,10 @@ let
         raycast
         shottr
         handy
+
+        # pi coding agent; all ~/.pi config is a live git repo it manages
+        # itself (nothing under ~/.pi is declared in home-manager).
+        nix-ai-tools.pi
       ];
       modules = {
         aerospace.enable = true;
@@ -53,7 +57,6 @@ let
         cli-utils.enable = true;
         direnv.enable = true;
         gpg.enable = true;
-        pi.enable = true;
         shell.enable = true;
         shell.zsh.enable = true; # macOS's login shell is zsh
         tui-apps.enable = true;
@@ -64,7 +67,7 @@ let
     windows = {
       username = "alexlychen";
       homeDirectory = "/home/alexlychen";
-      packages = [ ];
+      packages = [ pkgs.nix-ai-tools.pi ];
       modules = {
         # Mac-only modules are intentionally disabled here.
 
@@ -79,7 +82,6 @@ let
         cli-utils.enable = true;
         direnv.enable = true;
         gpg.enable = true;
-        pi.enable = true;
         shell.enable = true;
         tui-apps.enable = true;
         yazi.enable = true;
