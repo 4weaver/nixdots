@@ -5,9 +5,6 @@
 }:
 let
   cfg = config.my.modules.qutebrowser;
-  keys = import ../../lib/keybindings.nix;
-  dir = keys.direction;
-  mode = keys.mode;
 in
 {
   options.my.modules.qutebrowser.enable = lib.mkEnableOption "qutebrowser web browser";
@@ -45,16 +42,17 @@ in
           "xr" = "greasemonkey-reload;; reload";
           "xc" = "spawn sh -c 'echo \"{url}\" >> $HOME/urls.txt'";
 
-          ${dir.left} = "scroll-px 0 100";
-          ${dir.down} = "scroll-px 0 -100";
-          ${dir.up} = "scroll-px -100 0";
-          ${dir.right} = "scroll-px 100 0";
-          ${lib.toUpper dir.left} = "back";
-          ${lib.toUpper dir.right} = "forward";
-          ${lib.toUpper dir.down} = "tab-next";
-          ${lib.toUpper dir.up} = "tab-prev";
+          # qwerty
+          h = "scroll-px 0 100";
+          j = "scroll-px 0 -100";
+          k = "scroll-px -100 0";
+          l = "scroll-px 100 0";
+          H = "back";
+          L = "forward";
+          J = "tab-next";
+          K = "tab-prev";
 
-          ${mode.insert} = "mode-enter insert";
+          i = "mode-enter insert";
         };
       };
     };
