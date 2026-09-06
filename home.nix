@@ -48,7 +48,6 @@ let
         sketchybar.enable = true;
         syncthing.enable = true;
 
-        cli-extras.enable = true;
         zellij.keyLayout = "mac";
 
         gpg.pinentry = "touchid";
@@ -71,7 +70,6 @@ let
       modules = {
         # Mac-only modules are intentionally disabled here.
 
-        cli-extras.enable = false;
         wsl.enable = true;
         zellij.keyLayout = "windows";
 

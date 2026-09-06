@@ -107,7 +107,6 @@
         nvim-inogai.homeModules.default
         ./modules/aerospace
         ./modules/cli-utils
-        ./modules/cli-extras
         ./modules/direnv
         ./modules/fonts
         ./modules/gpg
