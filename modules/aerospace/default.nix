@@ -61,10 +61,9 @@ in
       settings = {
         after-login-command = [ ];
 
-        after-startup-command = [
-          "exec-and-forget sbar-inogai"
-        ];
-
+        # sbar-inogai is started and supervised by launchd (modules/sketchybar)
+        # — exec-and-forget'ing it here would spawn a second bar instance.
+        # This only sends events to the running bar:
         exec-on-workspace-change = [
           "${pkgs.bash}/bin/bash"
           "-c"
