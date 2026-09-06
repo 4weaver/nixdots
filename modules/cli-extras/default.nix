@@ -13,11 +13,15 @@ in
   config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [
       pandoc
-      deno
       wakatime-cli
 
       (writeShellScriptBin "md2pdf" ''
-        exec ${./md2pdf.ts} "$@"
+        for f in "$@"; do
+          pandoc -s --pdf-engine=xelatex \
+            -V CJKmainfont='Noto Serif CJK HK' \
+            -V papersize:a4 -V geometry:margin=1in \
+            -o "''${f%.md}.pdf" "$f"
+        done
       '')
     ];
   };

@@ -1,6 +1,5 @@
 {
   config,
-  pkgs,
   lib,
   ...
 }:
@@ -16,7 +15,6 @@ in
   config = lib.mkIf cfg.enable {
     programs.qutebrowser = {
       enable = true;
-      package = pkgs.qutebrowser;
       loadAutoconfig = true;
       searchEngines = {
         DEFAULT = "https://google.com/search?q={}";

@@ -12,9 +12,7 @@ in
     enable = lib.mkEnableOption "shell tools (nushell, atuin, carapace, starship, zoxide)";
 
     zsh = {
-      enable = lib.mkEnableOption "zsh (only needed where the OS login shell is zsh)" // {
-        default = false;
-      };
+      enable = lib.mkEnableOption "zsh (only needed where the OS login shell is zsh)";
     };
   };
 
@@ -44,8 +42,6 @@ in
       '';
       environmentVariables = config.home.sessionVariables;
       shellAliases = config.home.shellAliases;
-      plugins = with pkgs.nushellPlugins; [
-      ];
     };
 
     programs.atuin = {

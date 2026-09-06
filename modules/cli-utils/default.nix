@@ -89,7 +89,7 @@ in
       nix-output-monitor
 
       # --- macOS platform helpers ---
-      (writeShellScriptBin "noti" (builtins.readFile ./noti))
+      noti
 
       # --- Themed wrappers ---
       (writeShellScriptBin "fzf" ''

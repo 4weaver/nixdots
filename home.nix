@@ -45,7 +45,6 @@ let
         syncthing.enable = true;
 
         cli-extras.enable = true;
-        clipboard.enable = false;
         zellij.keyLayout = "mac";
 
         gpg.pinentry = "touchid";
@@ -70,8 +69,6 @@ let
         # Mac-only modules are intentionally disabled here.
 
         cli-extras.enable = false;
-        clipboard.enable = true;
-        clipboard.backend = "win32yank";
         wsl.enable = true;
         zellij.keyLayout = "windows";
 
@@ -107,7 +104,6 @@ let
 in
 {
 
-  # colorScheme = import ./lib/colorscheme.nix;
   # colorScheme = nix-colors.colorSchemes.gruvbox-dark-medium;
   colorScheme = nix-colors.colorSchemes.catppuccin-mocha;
 
@@ -118,8 +114,6 @@ in
   news.display = "silent";
 
   programs.home-manager.enable = true;
-
-  home.file = { };
 
   home.packages = cfg.packages ++ [
     pkgs.nodejs

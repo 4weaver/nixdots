@@ -8,51 +8,30 @@ let
   cfg = config.my.modules.aerospace;
 
   workspaceNamesByMonitor =
-    monitor: builtins.map (ws: ws.name) (builtins.filter (ws: ws.monitor == monitor) cfg.workspaces);
+    monitor: builtins.map (ws: ws.name) (builtins.filter (ws: ws.monitor == monitor) workspaces);
 
   mapToAttrs = list: fn: builtins.listToAttrs (builtins.map fn list);
   modeFn = f: [
     "mode ${f}"
-    "exec-and-forget noti -t 'Aerospace' 'Mode ${f}'"
+    "exec-and-forget noti -t 'Aerospace' -m 'Mode ${f}'"
   ];
   exec = f: "exec-and-forget ${f}";
+
+  workspaces = [
+    { key = "1"; name = "1:web";  monitor = 1; }
+    { key = "2"; name = "2:dev";  monitor = 2; }
+    { key = "3"; name = "3";      monitor = 1; }
+    { key = "4"; name = "4";      monitor = 2; }
+    { key = "5"; name = "5";      monitor = 1; }
+    { key = "6"; name = "6";      monitor = 2; }
+    { key = "7"; name = "7";      monitor = 1; }
+    { key = "8"; name = "8";      monitor = 2; }
+    { key = "9"; name = "9";      monitor = 1; }
+    { key = "0"; name = "10";     monitor = 2; }
+  ];
 in
 {
-  options.my.modules.aerospace = {
-    enable = lib.mkEnableOption "aerospace window manager";
-
-    workspaces = lib.mkOption {
-      type = lib.types.listOf (lib.types.submodule {
-        options = {
-          key = lib.mkOption {
-            type = lib.types.str;
-            description = "Key binding for the workspace";
-          };
-          name = lib.mkOption {
-            type = lib.types.str;
-            description = "Display name of the workspace";
-          };
-          monitor = lib.mkOption {
-            type = lib.types.int;
-            description = "Monitor assignment (1 or 2)";
-          };
-        };
-      });
-      default = [
-        { key = "1"; name = "1:web";  monitor = 1; }
-        { key = "2"; name = "2:dev";  monitor = 2; }
-        { key = "3"; name = "3";      monitor = 1; }
-        { key = "4"; name = "4";      monitor = 2; }
-        { key = "5"; name = "5";      monitor = 1; }
-        { key = "6"; name = "6";      monitor = 2; }
-        { key = "7"; name = "7";      monitor = 1; }
-        { key = "8"; name = "8";      monitor = 2; }
-        { key = "9"; name = "9";      monitor = 1; }
-        { key = "0"; name = "10";     monitor = 2; }
-      ];
-      description = "List of workspaces with key bindings and monitor assignments";
-    };
-  };
+  options.my.modules.aerospace.enable = lib.mkEnableOption "aerospace window manager";
 
   config = lib.mkIf cfg.enable {
     programs.aerospace = {
@@ -117,19 +96,19 @@ in
               alt-x = "close";
               alt-space = exec "open -a Raycast";
             }
-            // mapToAttrs cfg.workspaces (ws: {
+            // mapToAttrs workspaces (ws: {
               name = "alt-${ws.key}";
               value = [
                 "workspace ${ws.name}"
-                "exec-and-forget noti -t 'Aerospace' 'Switched to workspace ${ws.name}'"
+                "exec-and-forget noti -t 'Aerospace' -m 'Switched to workspace ${ws.name}'"
               ];
             })
-            // mapToAttrs cfg.workspaces (ws: {
+            // mapToAttrs workspaces (ws: {
               name = "alt-shift-${ws.key}";
               value = [
                 "move-node-to-workspace ${ws.name}"
                 "workspace ${ws.name}"
-                "exec-and-forget noti -t 'Aerospace' 'Moved window to workspace ${ws.name}'"
+                "exec-and-forget noti -t 'Aerospace' -m 'Moved window to workspace ${ws.name}'"
               ];
             });
           };

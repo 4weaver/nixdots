@@ -12,9 +12,6 @@
       modify_font baseline -2
     '';
   };
-  jetbrains = {
-    settings.font_family = "JetBrains Mono";
-  };
   plex = {
     settings.font_family = "Lilex";
     extraConfig = ''

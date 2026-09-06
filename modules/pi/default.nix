@@ -5,16 +5,7 @@
   ...
 }:
 {
-  options.my.modules.pi = {
-    enable = lib.mkEnableOption "pi coding agent";
-
-    package = lib.mkOption {
-      type = lib.types.package;
-      default = pkgs.nix-ai-tools.pi;
-      defaultText = lib.literalExpression "pkgs.nix-ai-tools.pi";
-      description = "pi package to install.";
-    };
-  };
+  options.my.modules.pi.enable = lib.mkEnableOption "pi coding agent";
 
   config = lib.mkIf config.my.modules.pi.enable {
     # Only install the pi binary. All ~/.pi/agent config (settings.json,
@@ -29,7 +20,7 @@
     # at arbitrary moments, so a real package install is required rather
     # than `nix run`.
     home.packages = [
-      config.my.modules.pi.package
+      pkgs.nix-ai-tools.pi
       pkgs.git-crypt
     ];
   };

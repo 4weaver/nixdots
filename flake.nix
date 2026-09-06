@@ -49,8 +49,7 @@
   # Presets
   #
   # See the documentation block inside `outputs` below. Presets are defined
-  # there (so they are in scope for `mkHome`) and re-exported as a flake
-  # output for inspection: `nix eval .#presets`.
+  # there (so they are in scope for `mkHome`).
   # ---------------------------------------------------------------------------
 
   outputs =
@@ -109,7 +108,6 @@
         ./modules/aerospace
         ./modules/cli-utils
         ./modules/cli-extras
-        ./modules/clipboard
         ./modules/direnv
         ./modules/fonts
         ./modules/gpg
@@ -146,7 +144,7 @@
       ];
 
       mkHome =
-        name: p:
+        p:
         let
           pkgs = nixpkgs.legacyPackages.${p.system}.extend (nixpkgs.lib.composeManyExtensions overlays);
         in
@@ -161,9 +159,9 @@
         };
     in
     {
-      homeConfigurations."inogai" = mkHome "inogai" presets.mac;
-      homeConfigurations."alexlychen" = mkHome "alexlychen" presets.windows;
-      homeConfigurations."arachnet" = mkHome "inogai" presets.arachnet;
+      homeConfigurations."inogai" = mkHome presets.mac;
+      homeConfigurations."alexlychen" = mkHome presets.windows;
+      homeConfigurations."arachnet" = mkHome presets.arachnet;
 
       # arachnet as a NixOS module: imported by nixos-config's arachnet
       # configuration so `nixos-rebuild switch` activates home-manager along
@@ -199,8 +197,5 @@
         };
         default = self.nixosModules.inogai-arachnet;
       };
-
-      # Re-export presets for inspection (`nix eval .#presets`).
-      inherit presets;
     };
 }

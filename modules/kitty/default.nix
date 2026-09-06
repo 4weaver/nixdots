@@ -14,7 +14,7 @@ in
   options.my.modules.kitty = {
     enable = lib.mkEnableOption "Kitty Terminal";
     font = lib.mkOption {
-      type = lib.types.enum [ "plex" "jetbrains" "victor" ];
+      type = lib.types.enum [ "plex" "victor" ];
       default = "plex";
       description = "Font for Kitty";
     };
