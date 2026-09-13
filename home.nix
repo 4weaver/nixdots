@@ -34,13 +34,13 @@ let
         shottr
         handy
 
-        # pi coding agent; all ~/.pi config is a live git repo it manages
-        # itself (nothing under ~/.pi is declared in home-manager).
         nix-ai-tools.pi
+        nix-ai-tools.command-code
       ];
       modules = {
         aerospace.enable = true;
         fonts.enable = true;
+        fzfmenu.enable = true;
         jankyborders.enable = true;
         kitty.enable = true;
         kitty.mapShiftSpaceToCxSpace = true;
