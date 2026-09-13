@@ -40,6 +40,12 @@ in
       settings = {
         after-login-command = [ ];
 
+        # config-version 2 makes `persistent-workspaces` default to [] instead
+        # of inferring it from the keyboard bindings — spell out what version 1
+        # inferred so the workspaces stay alive while empty.
+        config-version = 2;
+        persistent-workspaces = builtins.map (ws: ws.name) workspaces;
+
         # sbar-inogai is started and supervised by launchd (modules/sketchybar)
         # — exec-and-forget'ing it here would spawn a second bar instance.
         # This only sends events to the running bar:
@@ -74,7 +80,7 @@ in
             binding = {
               alt-slash = "layout tiles accordion";
               alt-comma = "layout horizontal vertical";
-              alt-d = exec "open -a Raycast";
+              alt-d = exec "fzfmenu-launch";
               alt-f = "layout floating tiling";
               alt-g = "resize smart -50";
               alt-shift-g = "resize smart +50";
@@ -87,14 +93,13 @@ in
               "alt-shift-k" = "move up";
               "alt-shift-l" = "move right";
               alt-semicolon = "balance-sizes";
-              alt-enter = exec "kitty -1 -d ~/";
+              alt-enter = exec "fzfmenu-launch";
               alt-esc = "focus-monitor --wrap-around next";
               alt-shift-esc = [
                 "move-node-to-monitor --wrap-around next"
                 "focus-monitor --wrap-around next"
               ];
               alt-x = "close";
-              alt-space = exec "open -a Raycast";
             }
             // mapToAttrs workspaces (ws: {
               name = "alt-${ws.key}";
