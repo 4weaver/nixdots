@@ -105,6 +105,11 @@ in
         AddKeysToAgent = "12h";
         ForwardAgent = true;
       };
+      # Host list for the fzfmenu ssh plugin (modules/fzfmenu).
+      settings."arachnet" = {
+        HostName = "192.168.70.100";
+        User = "agent";
+      };
     };
 
     services.ssh-agent = {

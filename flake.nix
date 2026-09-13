@@ -109,6 +109,7 @@
         ./modules/cli-utils
         ./modules/direnv
         ./modules/fonts
+        ./modules/fzfmenu
         ./modules/gpg
         ./modules/jankyborders
         ./modules/kitty
