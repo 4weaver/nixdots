@@ -32,40 +32,50 @@ let
   # * macos_quit_when_last_window_closed stays at its default (no) so the
   #   server survives dismissal and stays warm.
   launcher = pkgs.writeShellScriptBin "fzfmenu-launch" ''
-    . /etc/profile.d/nix.sh
-
     # Toggle: a second press dismisses the launcher. Keyed on fzf, which only
     # lives while the window is up — the kitty server deliberately outlives it,
     # so the process is not a usable "is it open?" signal.
-    if pgrep -f 'fzfmenu _controller' > /dev/null 2>&1; then
-      pkill -f 'fzfmenu _controller'
+    if /usr/bin/pgrep -f 'fzfmenu _controller' > /dev/null 2>&1; then
+      /usr/bin/pkill -f 'fzfmenu _controller'
       exit 0
     fi
 
-    export KITTY_CACHE_DIRECTORY="$HOME/Library/Caches/fzfmenu"
-
-    exec ${lib.getExe pkgs.kitty} \
-      --single-instance --instance-group fzfmenu \
-      --title fzfmenu \
-      -o remember_window_size=no \
-      -o remember_window_position=yes \
-      -o initial_window_width=1000 \
-      -o initial_window_height=800 \
-      ${lib.getExe fzfmenu}
+    # Nothing is inherited: --single-instance makes this server long-lived, so
+    # its start environment is what every window it ever opens sees.
+    # SSH_AUTH_SOCK is exported for the ssh plugin's windows.
+    exec /usr/bin/env -i \
+      HOME="$HOME" \
+      USER="$(/usr/bin/id -un)" \
+      TERM=xterm-kitty \
+      TMPDIR=/tmp \
+      PATH="${config.home.profileDirectory}/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+      SSH_AUTH_SOCK="$(/usr/bin/getconf DARWIN_USER_TEMP_DIR)/ssh-agent" \
+      KITTY_CACHE_DIRECTORY="$HOME/Library/Caches/fzfmenu" \
+      ${lib.getExe pkgs.kitty} \
+        --single-instance --instance-group fzfmenu \
+        --title fzfmenu \
+        -o remember_window_size=no \
+        -o remember_window_position=yes \
+        -o initial_window_width=1000 \
+        -o initial_window_height=800 \
+        ${lib.getExe fzfmenu}
   '';
 
   # `--max-depth 2` keeps the list to real applications: depth 1 misses
   # ~/Applications/Home Manager Apps/*, and going deeper surfaces the helper
   # bundles nested inside other apps.
+  # kitty.app is excluded: `open -a` only activates a running kitty and never
+  # opens a window — the `terminal` plugin below is the way in.
   appPicker = pkgs.writeShellScript "fzfmenu-app-picker" ''
-    exec ${lib.getExe pkgs.fd} -L --max-depth 2 '\.app$' \
+    exec ${lib.getExe pkgs.fd} -L --max-depth 2 -E kitty.app '\.app$' \
       /Applications "$HOME/Applications" /System/Applications \
       -x ${pkgs.coreutils}/bin/echo '{/}'
   '';
 
-  # Candidates come straight from ~/.ssh/config (written by modules/cli-utils).
-  # `Host` may list several names; wildcard/negation patterns are skipped.
-  sshPicker = pkgs.writeShellScript "fzfmenu-ssh-picker" ''
+  # One prefix for both: the local shell first, then every Host in ~/.ssh/config
+  # (written by modules/cli-utils; both mean "give me a terminal somewhere").
+  termPicker = pkgs.writeShellScript "fzfmenu-term-picker" ''
+    printf '%s\n' "~/"
     exec ${lib.getExe pkgs.gawk} '
       /^[[:space:]]*[Hh]ost[[:space:]]/ {
         for (i = 2; i <= NF; i++) if ($i !~ /[*?!]/) print $i
@@ -73,16 +83,22 @@ let
     ' "$HOME/.ssh/config"
   '';
 
-  # Runs inside the fzfmenu window. kitty propagates the caller's environment
-  # to the window it creates, so exporting the ssh-agent socket here is what
-  # makes the forwarded session work — the GUI-launched kitty server never had
-  # SSH_AUTH_SOCK to begin with. No --instance-group: the session belongs in a
-  # regular kitty window, with the regular config.
-  sshRunner = pkgs.writeShellScript "fzfmenu-ssh-runner" ''
-    export SSH_AUTH_SOCK="$(getconf DARWIN_USER_TEMP_DIR)/ssh-agent"
-    exec ${lib.getExe pkgs.kitty} -1 -T "ssh:$FZFMENU_OUTPUT" \
-      ${lib.getExe pkgs.openssh} "$FZFMENU_OUTPUT"
+  # `~/` or any path is a local window in that directory; anything else is an
+  # ssh host, which needs the forwarded agent socket. `kitty -1` joins the
+  # regular instance group, so these windows get the regular config and shell.
+  termRunner = pkgs.writeShellScript "fzfmenu-term-runner" ''
+    out="$FZFMENU_OUTPUT"
+    [ "$out" = "~/" ] && out="$HOME"
+    case "$out" in
+      /*)
+        exec ${lib.getExe pkgs.kitty} -1 -d "$out"
+        ;;
+    esac
+    export SSH_AUTH_SOCK="$(/usr/bin/getconf DARWIN_USER_TEMP_DIR)/ssh-agent"
+    exec ${lib.getExe pkgs.kitty} -1 -T "ssh:$out" \
+      ${lib.getExe pkgs.openssh} "$out"
   '';
+
 in
 {
   options.my.modules.fzfmenu.enable = lib.mkEnableOption "fzfmenu launcher";
@@ -102,11 +118,11 @@ in
       runner = '/usr/bin/open -a "$FZFMENU_OUTPUT"'
 
       [[plugins]]
-      name = "ssh"
-      description = "SSH into a host from ~/.ssh/config"
-      prefix = "ssh "
-      picker = "${sshPicker}"
-      runner = "${sshRunner}"
+      name = "terminal"
+      description = "Local terminal, or ssh to a host"
+      prefix = "t "
+      picker = "${termPicker}"
+      runner = "${termRunner}"
       background = true
     '';
   };
