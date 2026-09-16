@@ -133,7 +133,7 @@
     "home-manager-release": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-release"
         ]
       },
       "locked": {
@@ -275,6 +275,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-release": {
+      "locked": {
+        "lastModified": 1780734595,
+        "narHash": "sha256-DmTfP92QFYRLOGXlMIE54MAgxSJjDWocl3gRNOu72Os=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "9b696460ac78b5ccfc17c854d8c976f20456e943",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "9b696460ac78b5ccfc17c854d8c976f20456e943",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1785090369,
@@ -370,6 +386,7 @@
         "nix-yazi-flavors": "nix-yazi-flavors",
         "nixpkgs": "nixpkgs_2",
         "nixpkgs-old": "nixpkgs-old",
+        "nixpkgs-release": "nixpkgs-release",
         "nur": "nur",
         "nvim-inogai": "nvim-inogai",
         "sbar-inogai": "sbar-inogai"

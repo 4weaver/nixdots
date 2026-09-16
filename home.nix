@@ -20,9 +20,8 @@ let
   #   home-manager switch --flake .#inogai      # mac
   #   home-manager switch --flake .#alexlychen  # windows (WSL)
   #
-  # arachnet is consumed as a NixOS module from the nixos-config repo (see
-  # flake.nix `nixosModules.inogai-arachnet`), so its preset only carries the
-  # module toggles here; `nixos-rebuild switch` on arachnet activates it.
+  # arachnet (inogai) NixOS module is optional. Agent on arachnet is
+  # standalone: `home-manager switch --flake .#agent -b hm-bak`.
   presets = {
     mac = {
       username = "inogai";
@@ -101,6 +100,18 @@ let
         yazi.enable = true;
       };
     };
+    agent = {
+      username = "agent";
+      homeDirectory = "/home/agent";
+      packages = [ ];
+      modules = {
+        # Lean agent CLI: shell (nushell/atuin/carapace/starship/zoxide —
+        # no zsh, no direnv). No yazi/lazygit/cli-utils/gpg/pi/zellij —
+        # those are already on the system or in the agent nix profile.
+        # nvim is always on (wrappers.neovim) with language extras off.
+        shell.enable = true;
+      };
+    };
   };
 
   cfg = presets.${preset};
@@ -121,9 +132,10 @@ in
 
   home.file = { };
 
-  home.packages = cfg.packages ++ [
-    pkgs.nodejs
-  ];
+  # nodejs is a second copy of what's already on arachnet (nodejs_22). Mac
+  # and windows keep it; server presets do not.
+  home.packages =
+    cfg.packages ++ lib.optionals (preset == "mac" || preset == "windows") [ pkgs.nodejs ];
 
   # Only the mac preset needs unfree GUI apps (raycast/shottr). Guarded by
   # preset so the arachnet NixOS module (useGlobalPkgs = true) doesn't set
@@ -140,11 +152,11 @@ in
   wrappers.neovim.enable = true;
 
   # nvim language extras: the nvim-inogai module defaults every group to ON.
-  # arachnet (server) keeps nvim lean — disable all eight explicitly.
+  # Server presets keep nvim lean — disable all eight explicitly.
   # Mac/windows keep the defaults. The option lives under the wrapper
   # namespace because nvim-inogai's home module is a getInstallModule
   # wrapper (optionLocation = ["wrappers" "neovim"]).
-  wrappers.neovim.extras.lang = lib.mkIf (preset == "arachnet") {
+  wrappers.neovim.extras.lang = lib.mkIf (preset == "arachnet" || preset == "agent") {
     nix.enable = false;
     lua.enable = false;
     java.enable = false;

@@ -17,19 +17,20 @@
     # nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
     nixpkgs-old.url = "github:nixos/nixpkgs/release-25.11";
+    # arachnet's nixos-config pin (release-26.05 @ 9b69646). Agent standalone
+    # homeConfiguration uses this so `home-manager switch` reuses the machine
+    # store instead of pulling flakehub weekly.
+    nixpkgs-release.url = "github:NixOS/nixpkgs/9b696460ac78b5ccfc17c854d8c976f20456e943";
     home-manager = {
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    # Release-pinned home-manager for the arachnet NixOS module: the server's
-    # nixos-config pins nixpkgs to release-26.05, so home-manager must match
-    # (master tracks nixpkgs-unstable and can drift ahead of the server's
-    # nixpkgs). nixpkgs follows the main input so both HM sources stay on the
-    # same package set — the NixOS module is evaluated against the consumer's
-    # nixpkgs anyway.
+    # Release-pinned home-manager matching arachnet's nixpkgs (26.05). Used
+    # by the agent standalone homeConfiguration and by the optional NixOS
+    # modules (inogai-arachnet / agent-arachnet).
     home-manager-release = {
       url = "github:nix-community/home-manager/release-26.05";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs-release";
     };
     nur = {
       url = "github:nix-community/NUR";
@@ -57,6 +58,7 @@
     {
       self,
       nixpkgs,
+      nixpkgs-release,
       home-manager,
       home-manager-release,
       nur,
@@ -75,16 +77,19 @@
       #
       #   nix build .#homeConfigurations.inogai.activationPackage     # mac
       #   nix build .#homeConfigurations.alexlychen.activationPackage # windows
-      #   nix build .#homeConfigurations.arachnet.activationPackage   # arachnet (server)
+      #   nix build .#homeConfigurations.arachnet.activationPackage   # arachnet (inogai)
+      #   nix build .#homeConfigurations.agent.activationPackage      # arachnet (agent)
       #
       # Or with home-manager's standalone CLI:
       #
       #   home-manager switch --flake .#inogai      # mac
       #   home-manager switch --flake .#alexlychen  # windows (WSL)
+      #   home-manager switch --flake .#agent -b hm-bak   # arachnet agent
       #
-      # arachnet is consumed as a NixOS module from the nixos-config repo
-      # (`nixosModules.inogai-arachnet` below), so no `home-manager switch`
-      # on the server — `nixos-rebuild switch` activates it.
+      # Agent on arachnet is standalone: `home-manager switch --flake .#agent`
+      # (no nixos-rebuild). home-manager-path is one extra nix-profile
+      # element beside nix-tool-install; do not put ad-hoc tools in
+      # home.packages (name collision with `nix profile add`).
       presets = {
         mac = {
           system = "aarch64-darwin";
@@ -97,6 +102,10 @@
         arachnet = {
           system = "x86_64-linux";
           preset = "arachnet";
+        };
+        agent = {
+          system = "x86_64-linux";
+          preset = "agent";
         };
       };
 
@@ -146,11 +155,17 @@
       ];
 
       mkHome =
-        name: p:
+        {
+          hm,
+          pkgsFlake,
+          p,
+        }:
         let
-          pkgs = nixpkgs.legacyPackages.${p.system}.extend (nixpkgs.lib.composeManyExtensions overlays);
+          pkgs = pkgsFlake.legacyPackages.${p.system}.extend (
+            nixpkgs.lib.composeManyExtensions overlays
+          );
         in
-        home-manager.lib.homeManagerConfiguration {
+        hm.lib.homeManagerConfiguration {
           inherit pkgs;
           modules = sharedModules;
           extraSpecialArgs = {
@@ -159,43 +174,78 @@
             yaziFlavors = nix-yazi-flavors.packages.${p.system};
           };
         };
-    in
-    {
-      homeConfigurations."inogai" = mkHome "inogai" presets.mac;
-      homeConfigurations."alexlychen" = mkHome "alexlychen" presets.windows;
-      homeConfigurations."arachnet" = mkHome "inogai" presets.arachnet;
 
-      # arachnet as a NixOS module: imported by nixos-config's arachnet
-      # configuration so `nixos-rebuild switch` activates home-manager along
-      # with the system (no separate `home-manager switch` on the server).
-      # home-manager-release (release-26.05) matches the consumer's nixpkgs
-      # pin. useGlobalPkgs stays off (default) so the neovim overlay can live
-      # at the per-user nixpkgs.overlays — home-manager forbids nixpkgs.*
-      # options when useGlobalPkgs is true.
-      nixosModules = {
-        inogai-arachnet = {
-          config,
-          lib,
-          pkgs,
+      # NixOS module for one home-manager user on arachnet. useGlobalPkgs
+      # stays off (default) so the neovim overlay can live at the per-user
+      # nixpkgs.overlays — home-manager forbids nixpkgs.* options when
+      # useGlobalPkgs is true. useUserPackages puts home.path in
+      # /etc/profiles/per-user/<name>, not ~/.nix-profile.
+      mkNixosHmUser =
+        {
+          username,
+          presetName,
+        }:
+        {
           ...
-        }: {
+        }:
+        {
           imports = [ home-manager-release.nixosModules.home-manager ];
 
           home-manager = {
             useUserPackages = true;
+            # Stock nushell stubs already exist in the agent home; backup
+            # rather than fail activation. Standalone CLI uses `-b` instead.
+            backupFileExtension = "hm-bak";
             extraSpecialArgs = {
               inherit nix-colors;
-              preset = "arachnet";
+              preset = presetName;
               yaziFlavors = nix-yazi-flavors.packages.x86_64-linux;
             };
-            users.inogai = {
+            users.${username} = {
               imports = sharedModules;
-              # The nvim-inogai overlay must reach the user's pkgs; with
-              # useGlobalPkgs off, home-manager builds its own pkgs from the
-              # system nixpkgs plus these per-user overlays.
               nixpkgs.overlays = overlays;
             };
           };
+        };
+    in
+    {
+      homeConfigurations."inogai" = mkHome {
+        hm = home-manager;
+        pkgsFlake = nixpkgs;
+        p = presets.mac;
+      };
+      homeConfigurations."alexlychen" = mkHome {
+        hm = home-manager;
+        pkgsFlake = nixpkgs;
+        p = presets.windows;
+      };
+      homeConfigurations."arachnet" = mkHome {
+        hm = home-manager-release;
+        pkgsFlake = nixpkgs-release;
+        p = presets.arachnet;
+      };
+      # Agent: HM 26.05 + arachnet nixpkgs pin so switch reuses the machine
+      # store. Activate with:
+      #   nix run github:nix-community/home-manager/release-26.05 -- switch --flake .#agent -b hm-bak
+      homeConfigurations."agent" = mkHome {
+        hm = home-manager-release;
+        pkgsFlake = nixpkgs-release;
+        p = presets.agent;
+      };
+
+      # arachnet as NixOS modules: imported by nixos-config so
+      # `nixos-rebuild switch` activates home-manager along with the system
+      # (no separate `home-manager switch` on the server).
+      # home-manager-release (release-26.05) matches the consumer's nixpkgs
+      # pin.
+      nixosModules = {
+        inogai-arachnet = mkNixosHmUser {
+          username = "inogai";
+          presetName = "arachnet";
+        };
+        agent-arachnet = mkNixosHmUser {
+          username = "agent";
+          presetName = "agent";
         };
         default = self.nixosModules.inogai-arachnet;
       };
