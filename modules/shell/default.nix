@@ -25,6 +25,13 @@ in
       EDITOR = "nvim";
     };
 
+    # `nix` lives in the default profile, which HM's sessionPath default omits,
+    # so `home-manager switch` fails with "nix: command not found".
+    home.sessionPath = [
+      "/nix/var/nix/profiles/default/bin"
+      "${config.home.profileDirectory}/bin"
+    ];
+
     home.shellAliases = {
       nv = "nvim";
     } // lib.optionalAttrs config.my.modules.zellij.enable {
