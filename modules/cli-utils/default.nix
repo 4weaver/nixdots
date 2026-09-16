@@ -110,6 +110,14 @@ in
         HostName = "192.168.70.100";
         User = "agent";
       };
+      # `cockpit` (from the zide flake, installed in the agent profile) drops
+      # straight into the arachnet session with its dir, layout and editor env.
+      settings."cockpit" = {
+        HostName = "192.168.70.100";
+        User = "agent";
+        RequestTTY = "force";
+        RemoteCommand = "cockpit";
+      };
     };
 
     services.ssh-agent = {
