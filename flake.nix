@@ -14,11 +14,17 @@
 
   inputs = {
     # Specify the source of Home Manager and Nixpkgs.
-    # nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1";
+    # One nixpkgs for every machine, on arachnet's channel, so the homes
+    # there reuse the system store.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # `nixpkgs-old` and `nixpkgs-unstable` carry one package each, both
+    # pinned because the main nixpkgs cannot serve them: 26.05 would build
+    # qutebrowser's QtWebEngine from source on darwin (no aarch64 cache), and
+    # it has no `handy` at all.
     nixpkgs-old.url = "github:nixos/nixpkgs/release-25.11";
+    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/master";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nur = {
@@ -118,6 +124,7 @@
           sbar-inogai = sbar-inogai.packages.${final.system}.sbar-inogai;
           nix-ai-tools = nix-ai-tools.packages.${final.system};
           qutebrowser = inputs.nixpkgs-old.legacyPackages.${final.system}.qutebrowser;
+          handy = inputs.nixpkgs-unstable.legacyPackages.${final.system}.handy;
         })
       ];
 
