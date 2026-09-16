@@ -10,18 +10,26 @@ let
 
   cfg = config.my.modules.kitty;
 
-  # GUI-launched kitty (Dock/Raycast) gets launchd's bare PATH — nix PATH
-  # only exists inside shells. So declare the profile paths explicitly here
-  # and source the profile env files rather than depending on how kitty was
-  # started: nix-daemon.sh for the system profile, hm-session-vars.sh for the
-  # Home Manager session vars. zellij's panes then resolve nu (default_shell)
-  # regardless of launch context.
+  # A fixed environment rather than the caller's: a GUI-launched kitty gets
+  # launchd's PATH, and zellij keys its socket directory off TMPDIR. TERMINFO and
+  # KITTY_* are passed through because kitty itself owns them. zellij is exec'd,
+  # so there is deliberately no fallback shell.
   session = pkgs.writeShellScript "kitty-session" ''
-    export PATH="${config.home.profileDirectory}/bin:/nix/var/nix/profiles/default/bin:$PATH"
-    . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-    . ${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh
-    export SSH_AUTH_SOCK="$(getconf DARWIN_USER_TEMP_DIR)/ssh-agent"
-    exec ${lib.getExe pkgs.zellij} -l welcome
+    exec /usr/bin/env -i \
+      HOME="$HOME" \
+      USER="$(/usr/bin/id -un)" \
+      TERM="$TERM" \
+      TERMINFO="$TERMINFO" \
+      LANG="$LANG" \
+      KITTY_INSTALLATION_DIR="$KITTY_INSTALLATION_DIR" \
+      KITTY_PID="$KITTY_PID" \
+      KITTY_PUBLIC_KEY="$KITTY_PUBLIC_KEY" \
+      KITTY_WINDOW_ID="$KITTY_WINDOW_ID" \
+      KITTY_LISTEN_ON="$KITTY_LISTEN_ON" \
+      TMPDIR=/tmp \
+      PATH="${config.home.profileDirectory}/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin:/usr/sbin:/sbin" \
+      SSH_AUTH_SOCK="$(/usr/bin/getconf DARWIN_USER_TEMP_DIR)/ssh-agent" \
+      ${lib.getExe pkgs.zellij} -l welcome
   '';
 in
 {
