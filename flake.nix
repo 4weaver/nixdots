@@ -104,9 +104,15 @@
       #
       #   nix build .#homeConfigurations.inogai.activationPackage     # mac
       #   nix build .#homeConfigurations.alexlychen.activationPackage # windows
+      #   nix build .#homeConfigurations.agent.activationPackage      # arachnet (agent)
       #
       #   home-manager switch --flake .#inogai      # mac
       #   home-manager switch --flake .#alexlychen  # windows (WSL)
+      #   home-manager switch --flake .#agent       # arachnet (agent)
+      #
+      # The agent home is standalone — no nixos-rebuild, home changes must
+      # not rebuild the OS — and needs `-b hm-bak`, since it already has
+      # stock nushell stubs.
       homeArgs = nixpkgs.lib.genAttrs [ "aarch64-darwin" "x86_64-linux" ] (system: {
         pkgs = nixpkgs.legacyPackages.${system}.extend (nixpkgs.lib.composeManyExtensions overlays);
         extraSpecialArgs = {
@@ -121,6 +127,9 @@
       );
       homeConfigurations."alexlychen" = home-manager.lib.homeManagerConfiguration (
         homeArgs.x86_64-linux // { modules = sharedModules ++ [ ./machines/alexlychen.nix ]; }
+      );
+      homeConfigurations."agent" = home-manager.lib.homeManagerConfiguration (
+        homeArgs.x86_64-linux // { modules = sharedModules ++ [ ./machines/agent.nix ]; }
       );
     };
 }
