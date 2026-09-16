@@ -9,6 +9,14 @@ let
 
   fzfmenu = pkgs.nur.repos.inogai.fzfmenu;
 
+  # nixpkgs only builds CopyQ for Linux, hence the local derivation. Its server
+  # owns the pasteboard, so there is no capture step to arrange here.
+  copyq = pkgs.callPackage ./copyq.nix { };
+
+  # The bundle's binary, not $out/bin/copyq: CopyQ finds its plugins — the item
+  # plugins that handle images included — relative to the executable's path.
+  copyqBin = "${copyq}/Applications/CopyQ.app/Contents/MacOS/CopyQ";
+
   # Started by aerospace with exec-and-forget, so the name has to resolve on
   # PATH. kitty receives fzfmenu as a positional program, which bypasses
   # programs.kitty's `shell` setting (that would route into zellij) and keeps a
@@ -99,6 +107,73 @@ let
       ${lib.getExe pkgs.openssh} "$out"
   '';
 
+  # One line per item, "<row>\t<summary>", newest first (row 0). getItem() hands
+  # back every MIME type, so this is a single `copyq eval` run rather than a call
+  # per item; the row travels in the item text to reach the runner.
+  clipPicker = pkgs.writeShellScript "fzfmenu-clip-picker" ''
+    exec ${copyqBin} eval -- '
+      var out = [];
+      for (var i = 0; i < size(); ++i) {
+        var item = getItem(i), formats = Object.keys(item), image = "";
+        for (var f = 0; f < formats.length; ++f)
+          if (formats[f].indexOf("image/") === 0) image = formats[f];
+        var label = item[mimeText] !== undefined ? str(item[mimeText])
+          : item[mimeUriList] !== undefined ? str(item[mimeUriList])
+          : image !== "" ? "[" + image + " " + item[image].length + "B]"
+          : "[" + formats.join(", ") + "]";
+        print(i + "\t" + label.replace(/[ \t\r\n]+/g, " ").trim().substring(0, 120) + "\n");
+      }
+    '
+  '';
+
+  # fzf substitutes the highlighted item for `{}`, so field 1 of the whole line
+  # is the row; dropping up to the last space strips whatever prefix it carries.
+  clipShow = pkgs.writeShellScript "fzfmenu-clip-show" ''
+    row="$(printf '%s' "$1" | cut -f1)"
+    row="''${row##* }"
+    [ -n "$row" ] || exit 0
+    case "$row" in *[!0-9]*) exit 0 ;; esac
+
+    # An image item has no text, so the bytes go to a file and kitty draws them
+    # into the pane fzf reserved. --clear because images outlive the text drawn
+    # around them.
+    image="$(${copyqBin} eval -- '
+      var item = getItem(parseInt(str(arguments[1]))), formats = Object.keys(item), found = "";
+      for (var i = 0; i < formats.length; ++i)
+        if (formats[i].indexOf("image/") === 0) found = formats[i];
+      print(found);' "$row")"
+
+    if [ -n "$image" ]; then
+      tmp="$(/usr/bin/mktemp "''${TMPDIR:-/tmp}/fzfmenu-clip.XXXXXX")"
+      ${copyqBin} read "$image" "$row" > "$tmp"
+      # PNG is what macOS puts on the pasteboard anyway; anything else goes
+      # through sips so kitty can decode it.
+      if [ "$image" != "image/png" ]; then
+        /usr/bin/sips -s format png "$tmp" --out "$tmp.png" > /dev/null
+        tmp="$tmp.png"
+      fi
+      ${lib.getExe pkgs.kitty} +kitten icat --clear \
+        --place "''${FZF_PREVIEW_COLUMNS:-80}x''${FZF_PREVIEW_LINES:-24}@0x0" "$tmp"
+      rm -f "$tmp"
+      exit 0
+    fi
+
+    ${copyqBin} eval -- '
+      var item = getItem(parseInt(str(arguments[1])));
+      print(item[mimeText] !== undefined ? str(item[mimeText]).substring(0, 4000)
+        : Object.keys(item).join(", ") + "\n");' "$row"
+  '';
+
+  # `select` copies the row back with every format it holds — which is how an
+  # image comes back as an image — and floats it to the top (config move=true).
+  clipRunner = pkgs.writeShellScript "fzfmenu-clip-runner" ''
+    row="$(printf '%s' "$FZFMENU_OUTPUT" | cut -f1)"
+    row="''${row##* }"
+    [ -n "$row" ] || exit 1
+    case "$row" in *[!0-9]*) exit 1 ;; esac
+    exec ${copyqBin} select "$row"
+  '';
+
 in
 {
   options.my.modules.fzfmenu.enable = lib.mkEnableOption "fzfmenu launcher";
@@ -107,7 +182,20 @@ in
     home.packages = [
       fzfmenu
       launcher
+      copyq
     ];
+
+    # CopyQ's server is the whole capture side. With no arguments it stays in the
+    # foreground and shows no window, so launchd has something to supervise —
+    # --start-server would detach and leave launchd restarting a dead process.
+    launchd.agents.copyq = {
+      enable = true;
+      config = {
+        ProgramArguments = [ copyqBin ];
+        RunAtLoad = true;
+        KeepAlive = true;
+      };
+    };
 
     xdg.configFile."fzfmenu/config.toml".text = ''
       [[plugins]]
@@ -124,6 +212,14 @@ in
       picker = "${termPicker}"
       runner = "${termRunner}"
       background = true
+
+      [[plugins]]
+      name = "clipboard"
+      description = "Clipboard history; pick an entry to paste it back"
+      prefix = "cl "
+      picker = "${clipPicker}"
+      preview = "${clipShow} {}"
+      runner = "${clipRunner}"
     '';
   };
 }
