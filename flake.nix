@@ -41,13 +41,6 @@
     nix-colors.url = "github:misterio77/nix-colors";
   };
 
-  # ---------------------------------------------------------------------------
-  # Presets
-  #
-  # See the documentation block inside `outputs` below. Presets are defined
-  # there (so they are in scope for `mkHome`).
-  # ---------------------------------------------------------------------------
-
   outputs =
     {
       nixpkgs,
@@ -61,32 +54,9 @@
       ...
     }@inputs:
     let
-      # Each preset pins the `system` to build for and the `preset` name that
-      # `home.nix` consumes to select username, home directory, mac-only
-      # packages and module toggles. Switch machine by building a different
-      # configuration:
-      #
-      #   nix build .#homeConfigurations.inogai.activationPackage     # mac
-      #   nix build .#homeConfigurations.alexlychen.activationPackage # windows
-      #
-      # Or with home-manager's standalone CLI:
-      #
-      #   home-manager switch --flake .#inogai      # mac
-      #   home-manager switch --flake .#alexlychen  # windows (WSL)
-      presets = {
-        mac = {
-          system = "aarch64-darwin";
-          preset = "mac";
-        };
-        windows = {
-          system = "x86_64-linux";
-          preset = "windows";
-        };
-      };
-
-      # Shared module list. Mac-only modules are safe to import on every
-      # preset because they are all guarded by `mkEnableOption` + `mkIf` and
-      # only enabled from `home.nix` for the presets that need them.
+      # Shared module list. Mac-only modules are safe to import everywhere
+      # because they are all guarded by `mkEnableOption` + `mkIf` and only
+      # enabled from the machines that need them.
       sharedModules = [
         nix-colors.homeManagerModules.default
         nvim-inogai.homeModules.default
@@ -128,23 +98,29 @@
         })
       ];
 
-      mkHome =
-        p:
-        let
-          pkgs = nixpkgs.legacyPackages.${p.system}.extend (nixpkgs.lib.composeManyExtensions overlays);
-        in
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = sharedModules;
-          extraSpecialArgs = {
-            inherit nix-colors;
-            preset = p.preset;
-            yaziFlavors = nix-yazi-flavors.packages.${p.system};
-          };
+      # The arguments every machine's home shares. Only `system` varies, so
+      # generate one set per system; each home adds its own module from
+      # ./machines on top. Build or switch a machine with:
+      #
+      #   nix build .#homeConfigurations.inogai.activationPackage     # mac
+      #   nix build .#homeConfigurations.alexlychen.activationPackage # windows
+      #
+      #   home-manager switch --flake .#inogai      # mac
+      #   home-manager switch --flake .#alexlychen  # windows (WSL)
+      homeArgs = nixpkgs.lib.genAttrs [ "aarch64-darwin" "x86_64-linux" ] (system: {
+        pkgs = nixpkgs.legacyPackages.${system}.extend (nixpkgs.lib.composeManyExtensions overlays);
+        extraSpecialArgs = {
+          inherit nix-colors;
+          yaziFlavors = nix-yazi-flavors.packages.${system};
         };
+      });
     in
     {
-      homeConfigurations."inogai" = mkHome presets.mac;
-      homeConfigurations."alexlychen" = mkHome presets.windows;
+      homeConfigurations."inogai" = home-manager.lib.homeManagerConfiguration (
+        homeArgs.aarch64-darwin // { modules = sharedModules ++ [ ./machines/inogai.nix ]; }
+      );
+      homeConfigurations."alexlychen" = home-manager.lib.homeManagerConfiguration (
+        homeArgs.x86_64-linux // { modules = sharedModules ++ [ ./machines/alexlychen.nix ]; }
+      );
     };
 }
