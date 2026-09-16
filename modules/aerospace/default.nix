@@ -93,7 +93,8 @@ in
               "alt-shift-k" = "move up";
               "alt-shift-l" = "move right";
               alt-semicolon = "balance-sizes";
-              alt-enter = exec "fzfmenu-launch";
+              # A direct terminal; alt-d keeps the launcher.
+              alt-enter = exec "${config.home.profileDirectory}/bin/kitty -1 -d ~/";
               alt-esc = "focus-monitor --wrap-around next";
               alt-shift-esc = [
                 "move-node-to-monitor --wrap-around next"
