@@ -103,7 +103,6 @@ in
       enableDefaultConfig = false;
       settings."*" = {
         AddKeysToAgent = "12h";
-        ForwardAgent = true;
       };
       # Host list for the fzfmenu ssh plugin (modules/fzfmenu).
       settings."arachnet" = {
