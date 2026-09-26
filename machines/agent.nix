@@ -1,7 +1,11 @@
-{ ... }:
+{ pkgs, ... }:
 {
   home.username = "agent";
   home.homeDirectory = "/home/agent";
+
+  home.packages = [
+    pkgs.nix-ai-tools.herdr
+  ];
 
   # nvim-inogai defaults every language group to ON, but arachnet already
   # carries the toolchains. The option sits under `wrappers` because
