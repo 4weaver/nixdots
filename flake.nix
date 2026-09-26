@@ -13,18 +13,17 @@
   };
 
   inputs = {
-    # Specify the source of Home Manager and Nixpkgs.
-    # One nixpkgs for every machine, on arachnet's channel, so the homes
-    # there reuse the system store.
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # `nixpkgs-old` and `nixpkgs-unstable` carry one package each, both
-    # pinned because the main nixpkgs cannot serve them: 26.05 would build
-    # qutebrowser's QtWebEngine from source on darwin (no aarch64 cache), and
-    # it has no `handy` at all.
+    # Every machine shares one nixpkgs. Track unstable, not the release
+    # branch: the llm-agents packages the homes pull in (`pi`, `omp`) are
+    # built by llm-agents CI against nixpkgs-unstable, so a release-branch
+    # nixpkgs puts their outputs off the binary cache and they compile here.
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    # `nixpkgs-old` carries the one package the main nixpkgs cannot serve:
+    # `qutebrowser` — 26.05+ builds its QtWebEngine from source on darwin (no
+    # aarch64 cache), so it stays on release-25.11 where the cache has it.
     nixpkgs-old.url = "github:nixos/nixpkgs/release-25.11";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     home-manager = {
-      url = "github:nix-community/home-manager/release-26.05";
+      url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nur = {
@@ -37,7 +36,14 @@
       url = "github:inogai/nix-yazi-flavors";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nix-ai-tools.url = "github:numtide/nix-ai-tools";
+    # llm-agents CI builds `pi`/`omp` against its own nixpkgs, which is
+    # nixpkgs-unstable. Following the main input keeps that alignment without
+    # anyone editing the lock by hand — which is what commit d95fc36 did, and
+    # it moved every llm-agents output off cache.numtide.com.
+    nix-ai-tools = {
+      url = "github:numtide/llm-agents.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nix-colors.url = "github:misterio77/nix-colors";
   };
 
@@ -94,7 +100,6 @@
           sbar-inogai = sbar-inogai.packages.${final.system}.sbar-inogai;
           nix-ai-tools = nix-ai-tools.packages.${final.system};
           qutebrowser = inputs.nixpkgs-old.legacyPackages.${final.system}.qutebrowser;
-          handy = inputs.nixpkgs-unstable.legacyPackages.${final.system}.handy;
         })
       ];
 
