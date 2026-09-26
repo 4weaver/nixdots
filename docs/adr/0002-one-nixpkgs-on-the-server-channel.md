@@ -1,5 +1,7 @@
 # One nixpkgs, on the server's channel, with pins for what it cannot serve
 
+> **Superseded by [0003](0003-nixpkgs-rev-picked-by-cache-miss-survey.md)** (260926): the shared rev is now a `nixpkgs-unstable` revision picked by the cache-miss survey, and the `handy` pin below is void — the main input serves it. The `qutebrowser` pin stands.
+
 This flake tracked the flakehub weekly with home-manager master, while arachnet and its nixos-config track the `nixos-26.05` channel. A home built here therefore pulled a second copy of nixpkgs instead of reusing the store the machine already had, and the two home-managers sat on either side of the channel boundary.
 
 The main `nixpkgs` is now `nixos-26.05` and `home-manager` is the matching `release-26.05`, for every machine including the mac. Two extra inputs are pinned to carry one package each, because the main nixpkgs cannot serve them:
