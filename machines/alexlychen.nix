@@ -5,6 +5,7 @@
   home.packages = [
     pkgs.nodejs
     pkgs.nix-ai-tools.pi
+    pkgs.nix-ai-tools.omp
   ];
 
   my.modules = {
