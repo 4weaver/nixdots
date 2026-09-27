@@ -6,6 +6,14 @@
 }:
 let
   cfg = config.my.modules.herdr;
+
+  tomlFormat = pkgs.formats.toml { };
+
+  # The shell is an absolute store path rather than a bare `nu`: herdr spawns
+  # panes through its server, whose PATH is not the login shell's.
+  shellSettings = lib.optionalAttrs (cfg.shell != null) {
+    terminal.default_shell = lib.getExe cfg.shell;
+  };
 in
 {
   options.my.modules.herdr = {
@@ -15,8 +23,18 @@ in
       type = lib.types.nullOr lib.types.package;
       default = pkgs.nushell;
       description = ''
-        Shell for herdr's interactive panes. Null leaves herdr on its own
-        default, which is `$SHELL`, then `/bin/sh`.
+        Shell for herdr's interactive panes. Owns `terminal.default_shell`;
+        null leaves herdr on its own default (`$SHELL`, then `/bin/sh`).
+      '';
+    };
+
+    settings = lib.mkOption {
+      type = tomlFormat.type;
+      default = { };
+      description = ''
+        The rest of herdr's config.toml: keybindings, theme, popups. Written
+        to {file}`$XDG_CONFIG_HOME/herdr/config.toml` verbatim; see
+        <https://herdr.dev/docs/configuration/>.
       '';
     };
   };
@@ -29,14 +47,10 @@ in
       enable = true;
       package = pkgs.nix-ai-tools.herdr;
 
-      # The shell is an absolute store path rather than a bare `nu`: herdr
-      # spawns panes through its server, whose PATH is not the login shell's.
-      # home.packages below keeps that path alive for the GC.
-      settings = lib.optionalAttrs (cfg.shell != null) {
-        terminal.default_shell = lib.getExe cfg.shell;
-      };
+      settings = lib.recursiveUpdate cfg.settings shellSettings;
     };
 
+    # Keeps the absolute shell path alive for the GC.
     home.packages = lib.optional (cfg.shell != null) cfg.shell;
   };
 }
