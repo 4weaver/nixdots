@@ -16,6 +16,9 @@
 
     gpg.pinentry = "curses";
 
+    # herdr panes run nushell: WSL has no zsh and `sh` is all /bin carries.
+    herdr.enable = true;
+
     # CLI stack. shell.zsh stays off — Windows doesn't need zsh.
     cli-utils.enable = true;
     direnv.enable = true;

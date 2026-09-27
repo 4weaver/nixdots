@@ -72,6 +72,7 @@
         ./modules/fonts
         ./modules/fzfmenu
         ./modules/gpg
+        ./modules/herdr
         ./modules/jankyborders
         ./modules/kitty
         ./modules/qutebrowser
