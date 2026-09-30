@@ -21,6 +21,17 @@
     aerospace.enable = true;
     fonts.enable = true;
     fzfmenu.enable = true;
+    # herdr panes run nushell (the module's shell default), same as the agent
+    # home. detach is prefix+d for the same reason as machines/agent.nix: the
+    # keyboard's TMUX layer sends Ctrl-b d, while herdr's own default is
+    # prefix+q. onboarding off so the first window lands on the workspace.
+    herdr = {
+      enable = true;
+      settings = {
+        onboarding = false;
+        keys.detach = "prefix+d";
+      };
+    };
     jankyborders.enable = true;
     kitty.enable = true;
     kitty.mapShiftSpaceToCxSpace = true;
