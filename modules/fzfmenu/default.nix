@@ -80,31 +80,45 @@ let
       -x ${pkgs.coreutils}/bin/echo '{/}'
   '';
 
-  # One prefix for both: the local shell first, then every Host in ~/.ssh/config
-  # (written by modules/cli-utils; both mean "give me a terminal somewhere").
   termPicker = pkgs.writeShellScript "fzfmenu-term-picker" ''
-    printf '%s\n' "~/"
     exec ${lib.getExe pkgs.gawk} '
       /^[[:space:]]*[Hh]ost[[:space:]]/ {
-        for (i = 2; i <= NF; i++) if ($i !~ /[*?!]/) print $i
+        for (i = 2; i <= NF; i++) if ($i !~ /[*?!]/) hosts[++n] = $i
+      }
+      END {
+        print "herdr ~"
+        for (j = 1; j <= n; j++) print "herdr --remote " hosts[j]
+        print "~/"
+        for (j = 1; j <= n; j++) print hosts[j]
       }
     ' "$HOME/.ssh/config"
   '';
 
-  # `~/` or any path is a local window in that directory; anything else is an
-  # ssh host, which needs the forwarded agent socket. `kitty -1` joins the
-  # regular instance group, so these windows get the regular config and shell.
   termRunner = pkgs.writeShellScript "fzfmenu-term-runner" ''
-    out="$FZFMENU_OUTPUT"
-    [ "$out" = "~/" ] && out="$HOME"
-    case "$out" in
-      /*)
-        exec ${lib.getExe pkgs.kitty} -1 -d "$out"
+    kitty=${lib.getExe pkgs.kitty}
+    herdr=${lib.getExe pkgs.nix-ai-tools.herdr}
+    ssh=${lib.getExe pkgs.openssh}
+
+    read -r -a args <<< "$FZFMENU_OUTPUT"
+    [ "''${#args[@]}" -gt 0 ] || exit 1
+
+    case "''${args[0]}" in
+      herdr)
+        if [ "''${args[1]:-}" = "~" ]; then
+          exec "$kitty" -1 -T herdr -d "$HOME" "$herdr"
+        fi
+        [ "''${args[1]:-}" = "--remote" ] && [ -n "''${args[2]:-}" ] || exit 1
+        export SSH_AUTH_SOCK="$(/usr/bin/getconf DARWIN_USER_TEMP_DIR)/ssh-agent"
+        exec "$kitty" -1 -T "herdr:''${args[2]}" "$herdr" --remote "''${args[2]}"
+        ;;
+      "~/")
+        exec "$kitty" -1 -d "$HOME"
+        ;;
+      *)
+        export SSH_AUTH_SOCK="$(/usr/bin/getconf DARWIN_USER_TEMP_DIR)/ssh-agent"
+        exec "$kitty" -1 -T "ssh:''${args[0]}" "$ssh" "''${args[0]}"
         ;;
     esac
-    export SSH_AUTH_SOCK="$(/usr/bin/getconf DARWIN_USER_TEMP_DIR)/ssh-agent"
-    exec ${lib.getExe pkgs.kitty} -1 -T "ssh:$out" \
-      ${lib.getExe pkgs.openssh} "$out"
   '';
 
   # One line per item, "<row>\t<summary>", newest first (row 0). getItem() hands
@@ -207,7 +221,7 @@ in
 
       [[plugins]]
       name = "terminal"
-      description = "Local terminal, or ssh to a host"
+      description = "Terminal, herdr, or ssh"
       prefix = "t "
       picker = "${termPicker}"
       runner = "${termRunner}"
