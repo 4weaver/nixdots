@@ -4,11 +4,11 @@
   nixConfig = {
     extra-substituters = [
       "https://inogai.cachix.org"
-      "https://numtide.cachix.org"
+      "https://cache.numtide.com"
     ];
     extra-trusted-public-keys = [
       "inogai.cachix.org-1:gJVZ8+i50F4/I9/TBnkpBlAGzqzpJQdtK/iQATuWY60="
-      "numtide.cachix.org-1:2ps1kLBUWjxIneOy1Ik6cQjb41X0iXVXeHigGmycPPE="
+      "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
     ];
   };
 
