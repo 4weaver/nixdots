@@ -21,35 +21,9 @@
     aerospace.enable = true;
     fonts.enable = true;
     fzfmenu.enable = true;
-    # herdr panes run nushell (the module's shell default), same as the agent
-    # home. detach is prefix+d for the same reason as machines/agent.nix: the
-    # keyboard's TMUX layer sends Ctrl-b d, while herdr's own default is
-    # prefix+q. onboarding off so the first window lands on the workspace.
-    # prefix+a/prefix+f mirror the agent home; herdr's defaults own prefix+v
-    # (split_vertical), so the upstream README's binding for hint is not free.
     herdr = {
       enable = true;
-      quicklook.enable = true;
-      settings = {
-        onboarding = false;
-        keys = {
-          detach = "prefix+d";
-          command = [
-            {
-              key = "prefix+a";
-              type = "plugin_action";
-              command = "herdr-quicklook.hint";
-              description = "hint-pick any openable token on screen";
-            }
-            {
-              key = "prefix+f";
-              type = "plugin_action";
-              command = "herdr-quicklook.find";
-              description = "fuzzy-find a file to open";
-            }
-          ];
-        };
-      };
+      optionalDeps.enable = true;
     };
     jankyborders.enable = true;
     kitty.enable = true;

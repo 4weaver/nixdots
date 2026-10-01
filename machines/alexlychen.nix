@@ -17,26 +17,9 @@
     gpg.pinentry = "curses";
 
     # herdr panes run nushell: WSL has no zsh and `sh` is all /bin carries.
-    # hint/find mirror the agent home. WSL has no clipboard bridge the plugin
-    # reads (it looks for pbpaste/wl-paste/xclip), so the clipboard-driven entry
-    # points are inert here; the pane-text scan that hint is built on works.
     herdr = {
       enable = true;
-      quicklook.enable = true;
-      settings.keys.command = [
-        {
-          key = "prefix+a";
-          type = "plugin_action";
-          command = "herdr-quicklook.hint";
-          description = "hint-pick any openable token on screen";
-        }
-        {
-          key = "prefix+f";
-          type = "plugin_action";
-          command = "herdr-quicklook.find";
-          description = "fuzzy-find a file to open";
-        }
-      ];
+      optionalDeps.enable = true;
     };
 
     # CLI stack. shell.zsh stays off — Windows doesn't need zsh.
