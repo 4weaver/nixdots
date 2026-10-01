@@ -90,6 +90,7 @@ in
     # this machine's keybindings are the settings below.
     herdr = {
       enable = true;
+      quicklook.enable = true;
       settings = herdrSettings;
     };
   };

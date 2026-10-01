@@ -1,0 +1,19 @@
+--- a/scripts/lib.sh
++++ b/scripts/lib.sh
+@@ -1883,6 +1883,16 @@ pick_scan_text() {
+     }
+     {
+       line_no++
++      # CJK and other non-ASCII text is a SEPARATOR, not part of a span.
++      # Languages written without spaces glue prose straight onto a path
++      # ("文件在brain/HOST.md里面" is one whitespace-delimited word), so
++      # splitting on spaces alone hands `trim` a span it cannot rescue: the
++      # path is buried mid-token and neither the leading-punctuation nor the
++      # wrapper rules can see it, so a legitimate path resolves to nothing.
++      # A real file path in these transcripts is ASCII, and CJK filenames
++      # resolve via the repo index rather than this scan, so treating the
++      # non-ASCII run as a boundary is the semantics that actually match.
++      gsub(/[^\x20-\x7E]+/, " ", $0)
+       n = split($0, spans, /[ \t]+/)
+       for (i = 1; i <= n; i++) {
+         if (spans[i] == "") continue
