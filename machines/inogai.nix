@@ -13,9 +13,9 @@
     nodejs
   ];
 
-  # raycast and shottr are unfree.
+  # raycast, shottr and pikpak-cli are unfree.
   nixpkgs.config.allowUnfreePredicate =
-    pkg: builtins.elem (pkgs.lib.getName pkg) [ "raycast" "shottr" ];
+    pkg: builtins.elem (pkgs.lib.getName pkg) [ "raycast" "shottr" "pikpak-cli" ];
 
   my.modules = {
     aerospace.enable = true;
@@ -28,6 +28,7 @@
     jankyborders.enable = true;
     kitty.enable = true;
     kitty.mapShiftSpaceToCxSpace = true;
+    pikpak.enable = true;
     qutebrowser.enable = true;
     sketchybar.enable = true;
     syncthing.enable = true;

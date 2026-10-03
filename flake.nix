@@ -75,6 +75,7 @@
         ./modules/herdr
         ./modules/jankyborders
         ./modules/kitty
+        ./modules/pikpak
         ./modules/qutebrowser
         ./modules/shell
         ./modules/sketchybar
