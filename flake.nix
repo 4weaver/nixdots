@@ -80,6 +80,7 @@
         ./modules/shell
         ./modules/sketchybar
         ./modules/syncthing
+        ./modules/tern
         ./modules/tui-apps
         ./modules/wsl
         ./modules/yazi

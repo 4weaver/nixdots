@@ -32,6 +32,7 @@
     qutebrowser.enable = true;
     sketchybar.enable = true;
     syncthing.enable = true;
+    tern.enable = true;
 
     zellij.keyLayout = "mac";
 
