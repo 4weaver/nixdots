@@ -115,8 +115,8 @@ let
         ["window stack"] = "alt - m",
         ["window unstack"] = "alt + shift - m",
 
-        ["window nextdisplay"] = "alt - semicolon",
-        ["mouse nextdisplay"] = "alt + shift - semicolon",
+        ["mouse nextdisplay"] = "alt - semicolon",
+        ["window nextdisplay"] = "alt + shift - semicolon",
 
         ["window manage"] = "alt - y",
       },

@@ -40,7 +40,7 @@ moves the window instead of the focus — on top of which three keys are pair-va
 | shift + `h` / `l` | move window west / east |
 | shift + `k` / `j` | move window north / south |
 | `.` / shift + `.` | virtual row down / up (no wrap: no-op at row 2 / row 1) |
-| `;` / shift + `;` | window to next display / cursor to next display |
+| `;` / shift + `;` | cursor to next display / window to next display |
 | `m` / shift + `m` | stack onto the left column / unstack |
 | `b` / shift + `b` | column width − / + |
 | `u` | fzfmenu launcher |
@@ -89,7 +89,7 @@ rows' reverse slot went to `.`, and the freed `;` went to the display pair.
   com.github.karinushka.paneru`) and points the launchd agent at
   `Paneru.app/Contents/MacOS/paneru`. A `CFBundleExecutable` that is a script or a symlink does
   not work — both still resolve to the interpreter.
-- The display pair sits on `;` (`window nextdisplay`) and shift-`;` (`mouse nextdisplay`),
+- The display pair sits on `;` (`mouse nextdisplay`) and shift-`;` (`window nextdisplay`),
   which the dropped virtual-row bindings freed.
 - `window_resize_cycle` is off: `b`/`shift-b` are an explicit width pair, and wrapping from the
   widest preset back to the narrowest would read as a bug.
