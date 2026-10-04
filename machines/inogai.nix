@@ -9,13 +9,20 @@
 
     nix-ai-tools.pi
     nix-ai-tools.command-code
+    nix-ai-tools.omp
+    nix-ai-tools.grok
 
     nodejs
   ];
 
   # raycast, shottr and pikpak-cli are unfree.
   nixpkgs.config.allowUnfreePredicate =
-    pkg: builtins.elem (pkgs.lib.getName pkg) [ "raycast" "shottr" "pikpak-cli" ];
+    pkg:
+    builtins.elem (pkgs.lib.getName pkg) [
+      "raycast"
+      "shottr"
+      "pikpak-cli"
+    ];
 
   my.modules = {
     # paneru replaces AeroSpace on this machine (docs/adr/0005); flipping
