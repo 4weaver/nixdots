@@ -4,6 +4,9 @@
   pkgs,
   ...
 }:
+# Dormant on the mba: `my.modules.aerospace.enable` is false there and paneru
+# runs instead (docs/adr/0005). Kept as the fallback — flip the toggle in
+# machines/inogai.nix to restore the launchd agent.
 let
   cfg = config.my.modules.aerospace;
 

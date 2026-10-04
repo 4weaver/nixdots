@@ -23,15 +23,22 @@ in
 
     # launchd owns the bar daemon: start at login, restart if it dies. The
     # sbar-inogai wrapper execs sketchybar, which loads the lua config shipped
-    # in the package; aerospace only sends it events, it must not start it.
+    # in the package; nothing else may start it, only send it events.
+    #
+    # Stale block: sbar-inogai's spaces and window-title components shell out to
+    # `aerospace`, and the workspace block was refreshed by AeroSpace's
+    # `exec-on-workspace-change`. AeroSpace is now dormant on the mba
+    # (docs/adr/0005) and paneru has no equivalent hook, so those blocks no
+    # longer update. Left enabled rather than silently removed; paneru's menu
+    # bar indicator covers the need meanwhile.
     launchd.agents.sbar-inogai = {
       enable = true;
       config = {
         ProgramArguments = [ "${pkgs.sbar-inogai}/bin/sbar-inogai" ];
         RunAtLoad = true;
         KeepAlive = true;
-        # spaces.lua shells out to `aerospace`; same PATH the aerospace module
-        # gives its own exec'd commands.
+        # spaces.lua/window_title.lua shell out to `aerospace`; keep the PATH
+        # that finds it (and the rest of the profile's binaries).
         EnvironmentVariables.PATH =
           "${config.home.homeDirectory}/.nix-profile/bin:/usr/bin:/usr/sbin:/bin:/sbin";
       };

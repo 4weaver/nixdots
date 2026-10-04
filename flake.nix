@@ -45,6 +45,14 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-colors.url = "github:misterio77/nix-colors";
+    # paneru ships its own home-manager module and package, so nothing is
+    # packaged here. Only the mba enables it; the module is imported by every
+    # home because they all share one module list and it is guarded by
+    # `services.paneru.enable`.
+    paneru = {
+      url = "github:karinushka/paneru";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -57,6 +65,7 @@
       nix-yazi-flavors,
       nix-ai-tools,
       nix-colors,
+      paneru,
       ...
     }@inputs:
     let
@@ -66,6 +75,10 @@
       sharedModules = [
         nix-colors.homeManagerModules.default
         nvim-inogai.homeModules.default
+        # paneru's own module; its docs say to pick either this or
+        # `darwinModules.paneru`, never both — the home is the only config this
+        # flake builds for.
+        paneru.homeModules.paneru
         ./modules/aerospace
         ./modules/cli-utils
         ./modules/direnv
@@ -75,6 +88,7 @@
         ./modules/herdr
         ./modules/jankyborders
         ./modules/kitty
+        ./modules/paneru
         ./modules/pikpak
         ./modules/qutebrowser
         ./modules/shell

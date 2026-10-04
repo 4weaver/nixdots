@@ -18,7 +18,10 @@
     pkg: builtins.elem (pkgs.lib.getName pkg) [ "raycast" "shottr" "pikpak-cli" ];
 
   my.modules = {
-    aerospace.enable = true;
+    # paneru replaces AeroSpace on this machine (docs/adr/0005); flipping
+    # aerospace back on is the whole revert.
+    aerospace.enable = false;
+    paneru.enable = true;
     fonts.enable = true;
     fzfmenu.enable = true;
     herdr = {

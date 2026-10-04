@@ -17,8 +17,9 @@ let
   # plugins that handle images included — relative to the executable's path.
   copyqBin = "${copyq}/Applications/CopyQ.app/Contents/MacOS/CopyQ";
 
-  # Started by aerospace with exec-and-forget, so the name has to resolve on
-  # PATH. kitty receives fzfmenu as a positional program, which bypasses
+  # Started by the window manager (paneru binds `alt-u` to it, in ./paneru), so
+  # nothing here runs on PATH discovery — paneru execs the absolute store path.
+  # kitty receives fzfmenu as a positional program, which bypasses
   # programs.kitty's `shell` setting (that would route into zellij) and keeps a
   # multiplexer out of the middle — the prerequisite for kitty-graphics
   # previews.
@@ -31,9 +32,8 @@ let
   #   a ~0.2s socket round-trip instead of a ~1s cold start. The price: macOS
   #   cascades every window that server creates, so the launcher lands a step
   #   away from last time. Dropping --single-instance pins the position and
-  #   costs ~0.8s per open — speed won. Nothing in macOS lets us place the
-  #   window ourselves: AeroSpace has no such command and kitty's --position is
-  #   ignored here.
+  #   costs ~0.8s per open — speed won. kitty's own --position is ignored here;
+  #   pinning the launcher's spot is an open follow-up, not wired yet.
   # * remember_window_position covers the cold path: the first window after a
   #   reboot (or a killed server) lands where it was last left. Its own
   #   KITTY_CACHE_DIRECTORY keeps that memory out of the main kitty's cache.
